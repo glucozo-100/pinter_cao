@@ -71,7 +71,8 @@ def get_pinterest_links(url):
 # url = 'https://www.pinterest.com/pin/1548181168890509/'
 # url = 'https://www.pinterest.com/pin/1759287347092746/'
 
-url = 'https://www.pinterest.com/pin/70437488764288/'
+# url = 'https://www.pinterest.com/pin/70437488764288/'
+url = 'https://www.pinterest.com/pin/603763893824351072/'
 
 
 pin_links = get_pinterest_links(url)

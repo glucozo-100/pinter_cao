@@ -1,8 +1,10 @@
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
+from concurrent.futures import ThreadPoolExecutor
 
-def get_pinterest_links(url):
+def get_pinterest_links(href):
+    url = "https://www.pinterest.com" + href
     headers = {
         'accept': 'application/json, text/javascript, */*, q=0.01',
         'accept-language': 'en-US,en;q=0.9',
@@ -27,40 +29,49 @@ def get_pinterest_links(url):
     
     response = requests.get(url, headers=headers)
     soup = BeautifulSoup(response.content, 'html5lib')
-    
+
+    # Tìm kiếm comment_count
     comment_count = soup.find("h2", {'class': 'lH1 dyH iFc H2s bwj X8m zDA IZT'})
     comment_count = comment_count.text if comment_count else 'Comments not found'
     
-    author = soup.find('div', {'class': 'tBJ dyH iFc sAJ X8m zDA IZT H2s'}, {'dataset_id': 'creator-profile-name'})
+    # Tìm kiếm author
+    author = soup.find('div', {'class': 'tBJ dyH iFc sAJ X8m zDA IZT H2s'})
     if author is None:
-        author = soup.find('div', {'class': 'tBJ dyH iFc j1A X8m zDA IZT H2s'}, {'dataset_id': 'creator-profile-name'})
+        author = soup.find('div', {'class': 'tBJ dyH iFc j1A X8m zDA IZT H2s'})
     author = author.text if author else 'Author not found'
     
+    # Tìm kiếm follower
     follower = soup.find('div', {'data-test-id': 'user-follower-count'})
     if follower is not None:
         followers = follower.find('div', {'class': 'tBJ dyH iFc sAJ X8m zDA IZT swG'})
         followers_text = followers.get_text(strip=True) if followers else 'Followers not found'
     else:
-        follower = soup.find('div', {'data-test-id': 'follower-count'}, {'class':'tBJ dyH iFc sAJ X8m zDA IZT swG'})
+        follower = soup.find('div', {'data-test-id': 'follower-count'})
         followers_text = follower.text if follower else 'Follower count not found'
     
     return author, followers_text, comment_count
 
+def process_row(row):
+    author, follower, comment_count = get_pinterest_links(row['href'])
+    return {
+        'name': row['name'],
+        'url': row['url'],
+        'href': row['href'],
+        'author': author,
+        'comment_count': comment_count,
+        'follower': follower
+    }
+
 def main():
-    data = pd.read_csv('data.csv')
+    data = pd.read_csv('data.csv', header=None, names=['name', 'url', 'href'])
     results = []
 
-    for index, row in data.iterrows():
-        url = row['url']
-        name = row['name']
-        author, follower, comment_count = get_pinterest_links(url)
-        results.append({
-            'name': name,
-            'url': url,
-            'author': author,
-            'follower': follower,
-            'comment_count': comment_count
-        })
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = [executor.submit(process_row, row) for _, row in data.iterrows()]
+        for future in futures:
+            result = future.result()
+            if result is not None:
+                results.append(result)
     
     results_df = pd.DataFrame(results)
     results_df.to_csv('anime.csv', index=False)
