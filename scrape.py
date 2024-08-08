@@ -1,7 +1,9 @@
+import os
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from tqdm import tqdm
 
 def get_pinterest_links(href):
     url = "https://www.pinterest.com" + href
@@ -47,7 +49,7 @@ def get_pinterest_links(href):
         followers_text = followers.get_text(strip=True) if followers else 'Followers not found'
     else:
         follower = soup.find('div', {'data-test-id': 'follower-count'})
-        followers_text = follower.text if follower else 'Follower count not found'
+        followers_text = follower.find('div', class_='tBJ dyH iFc j1A X8m zDA IZT swG').text.split()[0]
     
     return author, followers_text, comment_count
 
@@ -68,13 +70,20 @@ def main():
 
     with ThreadPoolExecutor(max_workers=10) as executor:
         futures = [executor.submit(process_row, row) for _, row in data.iterrows()]
-        for future in futures:
-            result = future.result()
-            if result is not None:
-                results.append(result)
+        
+        for future in tqdm(as_completed(futures), total=len(futures), desc="Processing"):
+            try:
+                result = future.result()
+                if result is not None:
+                    results.append(result)
+            except Exception as e:
+                # print(f"Error processing future: {e}")
+                pass
     
     results_df = pd.DataFrame(results)
-    results_df.to_csv('anime.csv', index=False)
+    file_exists = os.path.isfile('anime1.csv')
+    
+    results_df.to_csv('anime1.csv', mode='a', index=False, header=not file_exists)
 
 if __name__ == "__main__":
     main()

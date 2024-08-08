@@ -55,13 +55,18 @@ def get_pinterest_links(url):
         followers_text = followers.get_text(strip=True) if followers else 'Followers not found'
         print(followers_text)  
     else:
-        follower = soup.find('div', {'data-test-id': 'follower-count'}, {'class':'tBJ dyH iFc sAJ X8m zDA IZT swG'}).text
+        # follower = soup.find('div', {'data-test-id': 'follower-count'}, {'class':'tBJ dyH iFc sAJ X8m zDA IZT swG'}).text.split()[0]
+        follower = soup.find('div', {'data-test-id': 'follower-count'})
+        follower = follower.find('div', class_='tBJ dyH iFc j1A X8m zDA IZT swG').text.split()[0]
         print(follower)
     
 
     # follower = soup.find('div', {'data-test-id': 'follower-count'}, {'class':'tBJ dyH iFc sAJ X8m zDA IZT swG'}).text
     # print(follower)
     
+    content = soup.find('div', {'class': 'XiG ujU zI7 iyn Hsu'}, {'data-test-id':'truncated-description'}).text
+    print(content)
+
     # print(follow)
     print(comment_count)
     print(author)
@@ -71,10 +76,12 @@ def get_pinterest_links(url):
 # url = 'https://www.pinterest.com/pin/1548181168890509/'
 # url = 'https://www.pinterest.com/pin/1759287347092746/'
 
-# url = 'https://www.pinterest.com/pin/70437488764288/'
-url = 'https://www.pinterest.com/pin/603763893824351072/'
+# url1 = 'https://www.pinterest.com/pin/70437488764288/'
 
+url = 'https://www.pinterest.com/pin/2744449752317432/'
+url1 = 'https://www.pinterest.com/pin/347340190028141759/'
 
-pin_links = get_pinterest_links(url)
+pin_links = get_pinterest_links(url1)
+# pin_links = get_pinterest_links(url1)
 
 
