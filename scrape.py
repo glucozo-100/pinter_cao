@@ -51,17 +51,24 @@ def get_pinterest_links(href):
         follower = soup.find('div', {'data-test-id': 'follower-count'})
         followers_text = follower.find('div', class_='tBJ dyH iFc j1A X8m zDA IZT swG').text.split()[0]
     
-    return author, followers_text, comment_count
+    content = soup.find('div', {'class': 'XiG ujU zI7 iyn Hsu'}, {'data-test-id':'truncated-description'})
+    if content is None:
+        content = "None"
+    else:
+        content = content.text
+
+    return author, followers_text, comment_count, content
 
 def process_row(row):
-    author, follower, comment_count = get_pinterest_links(row['href'])
+    author, follower, comment_count, content = get_pinterest_links(row['href'])
     return {
         'name': row['name'],
         'url': row['url'],
         'href': row['href'],
         'author': author,
         'comment_count': comment_count,
-        'follower': follower
+        'follower': follower,
+        'content': content 
     }
 
 def main():
@@ -81,9 +88,9 @@ def main():
                 pass
     
     results_df = pd.DataFrame(results)
-    file_exists = os.path.isfile('anime1.csv')
+    file_exists = os.path.isfile('anime2.csv')
     
-    results_df.to_csv('anime1.csv', mode='a', index=False, header=not file_exists)
+    results_df.to_csv('anime2.csv', mode='a', index=False, header=not file_exists)
 
 if __name__ == "__main__":
     main()
